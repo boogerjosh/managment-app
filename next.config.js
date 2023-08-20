@@ -4,6 +4,15 @@ const nextConfig = {
     appDir: true,
     serverComponentsExternalPackages: ["bcrypt"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/home",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

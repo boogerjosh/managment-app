@@ -15,11 +15,11 @@ const SidebarLink = ({ link }) => {
 
   const Icon = icons[link.icon];
   return (
-    <Link href={link.link}>
+    <Link href={link.link} className="w-full flex">
       <Icon
         size={40}
         className={clsx(
-          "stroke-gray-400 hover:stroke-violet-600 transition duration-200 ease-in-out",
+          "stroke-gray-400 hover:stroke-violet-600 transition duration-200 ease-in-out mx-auto",
           isActive && "stroke-violet-600"
         )}
       />

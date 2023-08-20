@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { register, signin } from "../lib/api";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
+
 import Input from "./Input";
 import Button from "./Button";
 import Card from "./Card";
-import Link from "next/link";
 
 const registerContent = {
   linkUrl: "/signin",
@@ -24,7 +25,7 @@ const signinContent = {
   buttonText: "Sign In",
 };
 
-const initial = { emai: "", password: "", firstName: "", lastName: "" };
+const initial = { email: "", password: "", firstName: "", lastName: "" };
 
 const AuthForm = ({ mode }) => {
   const [formState, setFormState] = useState({ ...initial });
@@ -36,7 +37,8 @@ const AuthForm = ({ mode }) => {
     if (mode === "register") {
       await register(formState);
     } else {
-      await signin(formState);
+      const res = await signin(formState);
+      console.log(res);
     }
 
     setFormState(initial);

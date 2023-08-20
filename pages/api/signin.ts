@@ -6,7 +6,7 @@ import { serialize } from "cookie";
 
 export default async function signin(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
-        const user = db.user.findUnique({
+        const user = await db.user.findUnique({
             where: {
                 email: req.body.email
             }
