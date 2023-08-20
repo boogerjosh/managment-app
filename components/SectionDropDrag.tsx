@@ -84,7 +84,7 @@ const Section = ({
       changeTaskStatus(id, status);
       await editTaskStatus(id, status);
     },
-    [changeTaskStatus, editTaskStatus, status]
+    [changeTaskStatus, status]
   );
 
   return (
