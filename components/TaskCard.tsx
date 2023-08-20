@@ -184,13 +184,19 @@ const TaskCard = ({ tasks: initialTasks, title, projectId }) => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           ></textarea>
-          <Button
-            disabled={loading}
-            type="submit"
-            style={{ marginTop: "10px" }}
-          >
-            {task ? "Edit" : "Create"}
-          </Button>
+          <div className="flex items-center text-right w-full justify-end mt-2.5">
+            <Button
+              onClick={() => closeModal()}
+              type="button"
+              size="medium"
+              style={{ marginRight: "10px", backgroundColor: "#f44336" }}
+            >
+              Cancel
+            </Button>
+            <Button disabled={loading} type="submit" size="medium">
+              {task ? "Edit" : "Create"}
+            </Button>
+          </div>
         </form>
       </Modal>
     </Card>
