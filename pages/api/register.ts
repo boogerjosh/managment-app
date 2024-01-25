@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 import { createJWT, hashPassword } from "../../lib/auth";
 import { db } from "../../lib/db";
 import { NextApiRequest, NextApiResponse } from "next";
