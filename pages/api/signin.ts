@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 
 import { db } from "../../lib/db";
 import { NextApiRequest, NextApiResponse } from "next";
