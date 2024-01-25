@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 import { validateJWT } from "../../lib/auth";
 import { db } from "../../lib/db";
 
