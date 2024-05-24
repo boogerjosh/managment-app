@@ -1,26 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { Prisma } from "@prisma/client";
+import { Dispatch, SetStateAction, useState } from "react";
+import toast from "react-hot-toast";
 import Modal from "react-modal";
 import { createNewProject } from "../lib/api";
 import Button from "./Button";
 import Input from "./Input";
-import { getAllProject } from "../lib/api";
 
 Modal.setAppElement("#modal");
 
-const NewProject = ({ addNewProject }) => {
+const projectWithTasks = Prisma.validator<Prisma.ProjectArgs>()({
+  include: { tasks: true },
+});
+
+type ProjectWithTasks = Prisma.ProjectGetPayload<typeof projectWithTasks>;
+
+type NewProjectProps = {
+  setProjects: Dispatch<SetStateAction<ProjectWithTasks[]>>;
+}
+
+const NewProject: React.FC<NewProjectProps> = ({ setProjects }) => {
   const [modalIsOpen, setIsOpen] = useState(false);
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await createNewProject(name);
-    let newProject = { ...res.project, tasks: [] };
-    addNewProject(newProject);
-    closeModal();
+    setLoading(true);
+    toast.promise(createNewProject(name),
+      {
+        loading: 'Saving...',
+        success: (data: any) => {
+          setProjects((prev) => [...prev, data.project]);
+          setName("");
+          setLoading(false);
+          closeModal();
+          if (data.status === 500) throw new Error("server error");
+          return "Everything went smoothly.";
+        },
+        error: "Uh oh, there was an error!",
+      }
+    );
   };
 
   return (
@@ -40,7 +63,7 @@ const NewProject = ({ addNewProject }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <Button type="submit">Create</Button>
+          <Button disabled={loading} type="submit">Create</Button>
         </form>
       </Modal>
     </div>

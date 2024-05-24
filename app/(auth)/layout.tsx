@@ -9,8 +9,10 @@ const poppins = Poppins({
 });
 
 import GlassPane from "../../components/GlassPane";
+import { PropsWithChildren } from "react";
 
-export default function AuthRootLayout({ children }) {
+type AuthRootLayoutProps = PropsWithChildren<{}>;
+export default function AuthRootLayout({ children }: AuthRootLayoutProps) {
   return (
     <html lang="en" className={poppins.className}>
       <head />

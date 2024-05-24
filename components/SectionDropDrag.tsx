@@ -1,13 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { useDrag, useDrop } from "react-dnd";
-import { editTaskStatus } from "../lib/api";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { deleteTask } from "../lib/api";
+import { useDrag } from "react-dnd";
+import { useEffect, useRef, useState } from "react";
+import DropDownMenu from "./DropDownMenu";
+import { Task, SectionProps, HeaderProps, TaskProps } from "../lib/types";
+import { useTaskSectionStyle } from "hooks/useTaskSectionStyle";
 
 let buttonDropDown = [
   {
+    id: "edit",
     text: "Edit",
     icon: (
       <svg
@@ -28,6 +30,7 @@ let buttonDropDown = [
     color: "text-[#656F79]",
   },
   {
+    id: "delete",
     text: "Delete",
     icon: (
       <svg
@@ -49,47 +52,26 @@ let buttonDropDown = [
   },
 ];
 
-const Section = ({
+const Section: React.FC<SectionProps> = ({
   status,
   tasks,
   changeTaskStatus,
   handleDeleteTask,
   openModal,
 }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: "task",
-    drop: (item) => addItemSection(item.id),
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
-  }));
+  const addItemSection =
+    async (id: string) => {
+      await changeTaskStatus(id, status);
+    }
 
-  let text = "To Do";
-  let bg = "bg-slate-500";
-
-  if (status === "STARTED") {
-    text = "In Progress";
-    bg = "bg-purple-500";
-  }
-
-  if (status === "COMPLETED") {
-    text = "Complete";
-    bg = "bg-green-500";
-  }
-
-  const tasksToMap = tasks.filter((task) => task.status === status);
-
-  const addItemSection = useCallback(
-    async (id) => {
-      changeTaskStatus(id, status);
-      await editTaskStatus(id, status);
-    },
-    [changeTaskStatus, status]
-  );
+  const { text, isOver, drop } = useTaskSectionStyle(status, addItemSection);
+  let tasksToMap: Task[] = []
+  if (tasks)
+    tasksToMap = tasks.filter((task) => task.status === status);
 
   return (
-    <div className={clsx("w-2/6", isOver ? "bg-slate-200" : "")} ref={drop}>
-      <Header text={text} bg={bg} count={tasksToMap.length} />
+    <div className={clsx('w-2/6', isOver ? 'bg-slate-200' : '')} ref={drop}>
+      <Header text={text} count={tasksToMap.length} />
       {tasksToMap.length > 0 &&
         tasksToMap.map((task) => (
           <Task
@@ -103,12 +85,14 @@ const Section = ({
   );
 };
 
-const Header = ({ text, bg, count }) => {
+const Header: React.FC<HeaderProps> = ({ text, count }) => {
   return (
     <div
       className={clsx(
-        bg,
-        "flex items-center h-12 pl-4 rounded-md uppercase text-sm text-white"
+        text === "To Do" && "bg-slate-500",
+        text === "In Progress" && "bg-purple-500",
+        text === "Completed" && "bg-green-500",
+        "flex items-center h-12 pl-4 rounded-md uppercase text-base text-white"
       )}
     >
       {text}
@@ -119,25 +103,24 @@ const Header = ({ text, bg, count }) => {
   );
 };
 
-const Task = ({ task, handleDeleteTask, openModal }) => {
+const Task: React.FC<TaskProps> = ({ task, handleDeleteTask, openModal }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const menuRef = useRef(null);
-
-  const handleClickOutside = (e) => {
-    if (!menuRef.current.contains(e.target)) {
+  const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as Node | null;
+    if (menuRef.current && target && !menuRef.current.contains(target)) {
       setIsDropdownOpen(false);
     }
   };
 
-  // Close the menu when the user clicks outside
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [menuRef]);
+
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
@@ -147,14 +130,13 @@ const Task = ({ task, handleDeleteTask, openModal }) => {
     }),
   }));
 
-  const handleEditAndDelete = async (type, task) => {
+  const handleEditAndDelete = async (type: string) => {
+    setIsDropdownOpen(false); // Close the dropdown immediately
+
     if (type === "Edit") {
       openModal(task);
-      setIsDropdownOpen(false);
     } else {
-      handleDeleteTask(task.id, task.status);
-      await deleteTask(task.id);
-      setIsDropdownOpen(false);
+      await handleDeleteTask(task.id, task.status);
     }
   };
 
@@ -195,28 +177,7 @@ const Task = ({ task, handleDeleteTask, openModal }) => {
       </button>
 
       {/* Dropdown menu */}
-      <div
-        ref={menuRef}
-        className={clsx(
-          "w-64 shadow-md rounded-md absolute p-2 bg-white right-[-35px] top-7 z-40",
-          isDropdownOpen ? "visible" : "invisible"
-        )}
-      >
-        {buttonDropDown.map((button, index) => (
-          <button
-            onClick={() => handleEditAndDelete(button.text, task)}
-            key={index}
-            draggable="false"
-            className={clsx(
-              "flex items-center p-2 whitespace-nowrap rounded-md text-sm hover:bg-[#F0F1F3] w-full hover:transition-all hove:ease-in-out",
-              button.color
-            )}
-          >
-            <div className="text-base mr-2.5">{button.icon}</div>
-            {button.text}
-          </button>
-        ))}
-      </div>
+      <DropDownMenu menuRef={menuRef} buttonDropDown={buttonDropDown} isDropdownOpen={isDropdownOpen} handleEditAndDelete={handleEditAndDelete} />
     </div>
   );
 };

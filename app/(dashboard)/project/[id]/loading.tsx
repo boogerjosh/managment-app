@@ -1,6 +1,6 @@
-import Card from "../../../components/Card";
+import Card from "../../../../components/Card";
 
-export default function HomePageLoader() {
+export default function DetailPageLoader() {
   return (
     <div className="flex justify-center items-center w-full h-full">
       <Card className="w-full mx-5 flex">

@@ -2,6 +2,7 @@ import { FC } from "react";
 import { Prisma, TASK_STATUS } from "@prisma/client";
 import Card from "./Card";
 import clsx from "clsx";
+import { formatDate } from "hooks/formatDate";
 
 const projectWithTasks = Prisma.validator<Prisma.ProjectArgs>()({
   include: { tasks: true },
@@ -9,22 +10,14 @@ const projectWithTasks = Prisma.validator<Prisma.ProjectArgs>()({
 
 type ProjectWithTasks = Prisma.ProjectGetPayload<typeof projectWithTasks>;
 
-const format = (date) =>
-  new Date(date).toLocaleDateString("en-us", {
-    weekday: "long",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
 const ProjectCard: FC<{ project: ProjectWithTasks }> = ({ project }) => {
-  const completedCount = project.tasks.filter(
+  const completedCount = project?.tasks?.filter(
     (task) => task.status === TASK_STATUS.COMPLETED
   ).length;
 
   let progress;
 
-  if (completedCount === 0) {
+  if (completedCount === 0 || !completedCount) {
     progress = 0;
   } else {
     progress = Math.ceil((completedCount / project.tasks.length) * 100);
@@ -34,7 +27,7 @@ const ProjectCard: FC<{ project: ProjectWithTasks }> = ({ project }) => {
     <Card className="!px-6 !py-8 hover:scale-105 transition-all ease-in-out duration-200">
       <div>
         <span className="text-sm text-gray-300">
-          {format(project.createdAt)}
+          {formatDate(project.createdAt)}
         </span>
       </div>
       <div className="mb-6">
@@ -42,7 +35,7 @@ const ProjectCard: FC<{ project: ProjectWithTasks }> = ({ project }) => {
       </div>
       <div className="mb-2">
         <span className="text-gray-400">
-          {completedCount}/{project.tasks.length} completed
+          {completedCount || 0}/{project?.tasks?.length || 0} completed
         </span>
       </div>
       <div>

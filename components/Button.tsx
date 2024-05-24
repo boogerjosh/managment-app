@@ -19,6 +19,8 @@ const buttonClasses = cva(
           "text-white",
           "border-transparent",
           "hover:bg-violet-600",
+          "disabled:bg-violet-300", // Faded violet background when disabled
+          "disabled:cursor-not-allowed"
         ],
         secondary: [
           "bg-white",
@@ -28,8 +30,14 @@ const buttonClasses = cva(
           "border-solid",
           "border-2",
           "border-gray-800",
+          "disabled:bg-gray-200", // Light gray background when disabled
+          "disabled:text-gray-500", // Faded text when disabled
+          "disabled:cursor-not-allowed"
         ],
-        text: ["bg-transparent", "text-black", "hover:bg-gray-100"],
+        danger: ["bg-red-500", "text-white", "hover:bg-red-600", "disabled:bg-red-200", // Light gray background when disabled
+          "disabled:text-gray-500", // Faded text when disabled
+          "disabled:cursor-not-allowed"],
+        text: ["bg-transparent", "text-black", "hover:bg-gray-100", "disabled:text-gray-500", "disabled:cursor-not-allowed"],
       },
       size: {
         small: ["text-md", "py-1", "px-2"],
@@ -45,18 +53,19 @@ const buttonClasses = cva(
 );
 
 export interface ButtonProps
-  extends React.HTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonClasses> {}
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, // Use ButtonHTMLAttributes
+  VariantProps<typeof buttonClasses> { }
 
 const Button: FC<ButtonProps> = ({
   children,
   intent,
   size,
   className,
+  disabled,
   ...props
 }) => {
   return (
-    <button className={buttonClasses({ intent, size, className })} {...props}>
+    <button className={buttonClasses({ intent, size, className })} disabled={disabled} {...props}>
       {children}
     </button>
   );

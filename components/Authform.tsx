@@ -27,23 +27,29 @@ const signinContent = {
 
 const initial = { email: "", password: "", firstName: "", lastName: "" };
 
-const AuthForm = ({ mode }) => {
+const AuthForm = ({ mode }: { mode: string }) => {
   const [formState, setFormState] = useState({ ...initial });
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    if (mode === "register") {
-      await register(formState);
-    } else {
-      const res = await signin(formState);
-      console.log(res);
+    try {
+      if (mode === "register") {
+        await register(formState);
+        router.replace("/signin");
+      } else {
+        await signin(formState);
+        router.replace("/home");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setFormState(initial);
     }
-
-    setFormState(initial);
-
-    router.replace("/home");
   };
 
   const content = mode === "register" ? registerContent : signinContent;
@@ -124,8 +130,8 @@ const AuthForm = ({ mode }) => {
               </span>
             </div>
             <div>
-              <Button type="submit" intent="secondary">
-                {content.buttonText}
+              <Button disabled={loading} type="submit" intent="secondary" className="flex items-center gap-1">
+                {loading && <div className="w-4 h-4 border-4 border-dashed rounded-full animate-spin dark:border-violet-400 m-auto"></div>} {content.buttonText}
               </Button>
             </div>
           </div>

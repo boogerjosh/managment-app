@@ -6,16 +6,23 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const icons = { Settings, User, Grid, Calendar };
-const SidebarLink = ({ link }) => {
+type SidebarLink = {
+  link: {
+    label: string;
+    icon: string;
+    linkUrl: string
+  }
+}
+const SidebarLink: React.FC<SidebarLink> = ({ link }) => {
   const pathname = usePathname();
   let isActive = false;
-  if (pathname === link.link) {
+  if (pathname === link.linkUrl) {
     isActive = true;
   }
 
   const Icon = icons[link.icon];
   return (
-    <Link href={link.link} className="w-full flex">
+    <Link href={link.linkUrl} className="w-full flex" prefetch={true}>
       <Icon
         size={40}
         className={clsx(

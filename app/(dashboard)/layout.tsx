@@ -1,9 +1,5 @@
-"use client";
-
 import "../../styles/global.css";
 import { Poppins } from "@next/font/google";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { Toaster } from "react-hot-toast";
 // config the ubuntu font and use it with deafult arguments.
 const poppins = Poppins({
@@ -14,8 +10,11 @@ const poppins = Poppins({
 
 import GlassPane from "../../components/GlassPane";
 import Sidebar from "../../components/Sidebar";
+import { PropsWithChildren } from "react";
+import DndReactProvider from "providers/DndProvider";
 
-export default function DashboardRootLayout({ children }) {
+type DashboardRootLayoutProps = PropsWithChildren<{}>; // Define PropsWithChildren type
+export default function DashboardRootLayout({ children }: DashboardRootLayoutProps) {
   return (
     <html lang="en" className={poppins.className}>
       <head />
@@ -23,7 +22,9 @@ export default function DashboardRootLayout({ children }) {
         <GlassPane className="w-full h-full flex items-center box-border p-5">
           <Toaster />
           <Sidebar />
-          <DndProvider backend={HTML5Backend}>{children}</DndProvider>
+          <DndReactProvider>
+            {children}
+          </DndReactProvider>
         </GlassPane>
         <div id="modal"></div>
       </body>

@@ -1,29 +1,42 @@
-import { db } from "../../../../lib/db";
 import { getUserFromCookie } from "../../../../lib/auth";
 import { cookies } from "next/headers";
 import TaskCard from "../../../../components/TaskCard";
+import { prisma } from "../../../../lib/db";
+import { Project } from "../../../../lib/types";
 
-const getData = async (id) => {
+async function getData(id: string): Promise<Project> {
   const user = await getUserFromCookie(cookies());
 
-  const project = await db.project.findFirst({
+  if (!user) {
+    throw new Error('User not found in cookies');
+  }
+
+  const project = await prisma.project.findFirst({
     where: {
       id,
-      ownerId: user?.id,
+      ownerId: user.id,
     },
     include: {
-      tasks: true,
+      tasks: {
+        orderBy: {
+          createdAt: 'asc', // or 'desc' for descending order
+        },
+      },
     },
   });
 
-  return project;
-};
+  if (!project) {
+    throw new Error('Project not found or unauthorized');
+  }
 
-export default async function ProjectPage({ params }) {
-  const project = await getData(params.id);
+  return project as Project;
+}
+
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const project: Project = await getData(params.id);
 
   return (
-    <div className="h-full overflow-y-auto px-5 w-full">
+    <div className="h-full mx-5 w-full overflow-hidden">
       <TaskCard
         tasks={project.tasks}
         title={project.name}

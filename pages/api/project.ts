@@ -1,17 +1,16 @@
-export const runtime = 'edge';
-
 import { validateJWT } from "../../lib/auth";
-import { db } from "../../lib/db";
+import { prisma } from "../../lib/db";
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await validateJWT(req.cookies[process.env.COOKIE_NAME]);
 
-  const newProject = await db.project.create({
+  const newProject = await prisma.project.create({
     data: {
       name: req.body.name,
       ownerId: user.id,
     },
   });
 
-  res.json({ data: { message: "ok", project:  newProject } });
+  res.json({ data: { message: "ok", project: newProject } });
 } 

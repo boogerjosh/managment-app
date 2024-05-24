@@ -7,19 +7,19 @@ import Image from "next/image";
 import greetingsImg from "../assets/digital3d.png";
 
 const getData = async () => {
-  await delay(4000);
+  await delay(1000);
   const user = await getUserFromCookie(cookies());
   return user;
 };
 
-const Greeting = async () => {
+export default async function Greeting() {
   const user = await getData();
 
   return (
     <Card className="w-full py-4 relative">
       <div className="mb-4">
         <h1 className="text-3xl text-gray-700 font-bold mb-4">
-          Hello, {user?.firstName}!
+          Hello, {user?.firstName} {user?.lastName}!
         </h1>
         <h4 className="text-xl text-gray-400">
           Check your daily tasks and schedule
@@ -34,13 +34,8 @@ const Greeting = async () => {
         className="absolute top-0 right-0"
         width={220}
         height={220}
-        // width={500} automatically provided
-        // height={500} automatically provided
-        // blurDataURL="data:..." automatically provided
-        // placeholder="blur" // Optional blur-up while loading
+        placeholder="blur"
       />
     </Card>
   );
 };
-
-export default Greeting;

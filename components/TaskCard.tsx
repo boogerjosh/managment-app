@@ -6,117 +6,119 @@ import Section from "./SectionDropDrag";
 import { useCallback, useState } from "react";
 import Modal from "react-modal";
 import Input from "./Input";
-import { createTask, editTask } from "../lib/api";
+import { createTask, deleteTask, editTask, editTaskStatus } from "../lib/api";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
-
-// const getData = async () => {
-//   const user = await getUserFromCookie(cookies());
-
-//   const tasks = await db.task.findMany({
-//     where: {
-//       ownerId: user?.id,
-//       NOT: {
-//         status: TASK_STATUS.COMPLETED,
-//         deleted: false,
-//       },
-//     },
-//     take: 5,
-//     orderBy: {
-//       due: "asc",
-//     },
-//   });
-
-//   return tasks;
-// };
+import { Task, TaskStatus } from "../lib/types";
 
 Modal.setAppElement("#modal");
 
-const TaskCard = ({ tasks: initialTasks, title, projectId }) => {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [task, setTask] = useState(null);
+type TaskCardProps = {
+  tasks: Task[];
+  title: string;
+  projectId: string;
+}
+
+const TaskCard: React.FC<TaskCardProps> = ({ tasks, title, projectId }) => {
+  const [taskDatas, setTaskDatas] = useState<Task[]>(tasks)
+  const [task, setTask] = useState<Task | null>();
+  const [valueInputs, setValueInputs] = useState({ name: "", description: "" })
   const [modalIsOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const statuses: TaskStatus[] = ["NOT_STARTED", "STARTED", "COMPLETED"];
 
-  const statuses = ["NOT_STARTED", "STARTED", "COMPLETED"];
+  const openModal = (task?: Task) => {
+    setTask(task);
 
-  const openModal = (task) => {
-    if (task) {
-      setTask(task);
-      setName(task.name);
-      setDescription(task.description);
-    } else {
-      setTask(null);
-      setName("");
-      setDescription("");
-    }
+    // Set default values based on whether a task is provided or not
+    setValueInputs({
+      name: task?.name ?? "",
+      description: task?.description ?? ""
+    });
+
     setIsOpen(true);
   };
+
   const closeModal = () => setIsOpen(false);
 
-  const changeTaskStatus = useCallback(async (id, status) => {
-    setTasks((prev) =>
+  const changeTaskStatus = useCallback(async (id: string, status: string) => {
+    setTaskDatas((prev) =>
       prev.map((task) => (task.id === id ? { ...task, status } : task))
     );
-  }, []);
+    await editTaskStatus(id, status);
+  }, [taskDatas]);
 
-  const handleDeleteTask = useCallback(async (id, status) => {
-    setTasks((prev) =>
+  const handleDeleteTask = useCallback(async (id: string, status: string) => {
+    setTaskDatas((prev) =>
       prev.filter((task) => !(task.id === id && task.status === status))
     );
-  }, []);
+    await deleteTask(id);
+  }, [taskDatas]);
 
-  const handleInsertAndEdit = (e) => {
+  const handleInsertAndEdit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    let res;
     const newTask = {
       id: uuidv4(), // Generate a random ID for the new task
-      name: name,
-      description: description,
-      status: "NOT_STARTED",
+      name: valueInputs.name,
+      description: valueInputs.description,
+      status: "NOT_STARTED"
     };
 
     if (task) {
-      res = editTask(name, projectId, description, task.id);
+      toast.promise(editTask(newTask.name, projectId, newTask.description, task.id),
+        {
+          loading: 'Saving...',
+          success: (data: any) => {
+            setTaskDatas((prev) =>
+              prev.map((t) =>
+                t.id === task.id ? { ...t, name: newTask.name, description: newTask.description } : t
+              )
+            );
+            setTask(null);
+            setLoading(false);
+            setValueInputs({
+              name: "",
+              description: ""
+            });
+            closeModal();
+            if (data.status === 500) throw new Error("server error");
+            return "Everything went smoothly.";
+          },
+          error: "Uh oh, there was an error!",
+        }
+      );
     } else {
       // Create a new task with the provided name and description, and a default status of NOT_STARTED
-      res = createTask(
-        newTask.name,
-        projectId,
-        newTask.description,
-        newTask.id
+      toast.promise(
+        createTask(
+          newTask.name,
+          projectId,
+          newTask.description,
+          newTask.id
+        ),
+        {
+          loading: 'Saving...',
+          success: (data: any) => {
+            const newValue = [...taskDatas, data.task]
+            setTaskDatas(newValue);
+            setLoading(false);
+            setValueInputs({
+              name: "",
+              description: ""
+            });
+            closeModal();
+            if (data.status === 500) throw new Error("server error");
+            return "Everything went smoothly.";
+          },
+          error: "Uh oh, there was an error!",
+        }
       );
     }
-
-    toast.promise(res, {
-      loading: "Loading ...",
-      success: (data) => {
-        if (task) {
-          setTasks((prev) =>
-            prev.map((t) =>
-              t.id === task.id ? { ...t, name, description } : t
-            )
-          );
-        } else {
-          setTasks((prev) => [...prev, newTask]);
-        }
-        setName("");
-        setDescription("");
-        setTask(null);
-        setLoading(false);
-        closeModal();
-        if (data.status === 500) throw new Error("server error");
-        return "Everything went smoothly.";
-      },
-      error: "Uh oh, there was an error!",
-    });
   };
 
   return (
-    <Card>
+    <Card className="overflow-y-scroll">
       <div className="flex justify-between items-center">
         <div>
           <span className="text-3xl text-gray-600">{title}</span>
@@ -132,35 +134,17 @@ const TaskCard = ({ tasks: initialTasks, title, projectId }) => {
         </div>
       </div>
       <div className="flex gap-8 py-2 mt-5 w-full">
-        {statuses.map((status, index) => (
+        {statuses.map((status: TaskStatus) => (
           <Section
-            key={index}
+            key={status}
             status={status}
-            tasks={tasks}
+            tasks={taskDatas}
             changeTaskStatus={changeTaskStatus}
             handleDeleteTask={handleDeleteTask}
             openModal={openModal}
           />
         ))}
       </div>
-      {/* <div>
-        {data && data.length && (
-          <div>
-            {data.map((task) => (
-              <div className="py-2" key={task.id}>
-                <div>
-                  <span className="text-gray-800">{task.name}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-sm">
-                    {task.description}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div> */}
 
       <Modal
         isOpen={modalIsOpen}
@@ -172,24 +156,26 @@ const TaskCard = ({ tasks: initialTasks, title, projectId }) => {
         <form onSubmit={handleInsertAndEdit}>
           <Input
             placeholder="task name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={valueInputs.name}
+            onChange={(e) => setValueInputs({ ...valueInputs, name: e.target.value })}
           />
           <textarea
             className="border-solid border-gray border-2 px-6 py-2 text-lg rounded-3xl w-full mt-2"
-            rows="5"
+            rows={5}
             placeholder="task description"
             name="description"
             id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={valueInputs.description}
+            onChange={(e) => setValueInputs({ ...valueInputs, description: e.target.value })}
           ></textarea>
           <div className="flex items-center text-right w-full justify-end mt-2.5">
             <Button
               onClick={() => closeModal()}
               type="button"
               size="medium"
-              style={{ marginRight: "10px", backgroundColor: "#f44336" }}
+              disabled={loading}
+              intent="danger"
+              className="mr-2.5"
             >
               Cancel
             </Button>

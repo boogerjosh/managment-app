@@ -1,12 +1,11 @@
-export const runtime = 'edge';
+import { prisma } from "../../lib/db";
+import { NextApiRequest, NextApiResponse } from 'next';
 
-import { db } from "../../lib/db";
-
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const { taskId } = req.body; // Extract taskId and newStatus from the request body
 
-  await db.task.delete({
+  await prisma.task.delete({
     where: { id: taskId }, // Update the task with the provided taskId
   });
 

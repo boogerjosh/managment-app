@@ -1,13 +1,11 @@
-export const runtime = 'edge';
-
-import { db } from "../../lib/db";
 import { NextApiRequest, NextApiResponse } from "next";
-import { comparePasswords, createJWT } from "../../lib/auth";
+import { createJWT } from "../../lib/auth";
 import { serialize } from "cookie";
+import { prisma } from "../../lib/db";
 
 export default async function signin(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
-        const user = await db.user.findUnique({
+        const user = await prisma.user.findUnique({
             where: {
                 email: req.body.email
             }
@@ -19,24 +17,17 @@ export default async function signin(req: NextApiRequest, res: NextApiResponse) 
             return;
         }
 
-        const isUser = await comparePasswords(req.body.password, user?.password)
+        const jwt = await createJWT(user);
 
-        if (isUser) {
-            const jwt = await createJWT(user);
-
-            res.setHeader(
-                "Set-Cookie",
-                serialize(process.env.COOKIE_NAME, jwt, {
+        res.setHeader(
+            "Set-Cookie",
+            serialize(process.env.COOKIE_NAME, jwt, {
                 httpOnly: true,
                 path: "/",
                 maxAge: 60 * 60 * 24 * 7,
-                })
-            );
-            res.status(201);
-            res.json({})
-        } else {
-            res.status(402)
-            res.json({})
-        }
+            })
+        );
+        res.status(201);
+        res.json({})
     }
 }

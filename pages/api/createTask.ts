@@ -1,16 +1,16 @@
-export const runtime = 'edge';
-
 import { validateJWT } from "../../lib/auth";
-import { db } from "../../lib/db";
+import { prisma } from "../../lib/db";
+import { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req, res) {
-  const user = await validateJWT(req.cookies[process.env.COOKIE_NAME]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const cookieName = process.env.COOKIE_NAME;
+  const user = await validateJWT(req.cookies[cookieName]);
 
   const { name, projectId, description, taskId } = req.body;
 
   try {
     // Check if the project exists
-    const project = await db.project.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         ownerId: user?.id,
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     // Create the new task
-    const newTask = await db.task.create({
+    const newTask = await prisma.task.create({
       data: {
         id: taskId,
         name: name,

@@ -1,19 +1,18 @@
-// import Image from "next/image";
 import Card from "./Card";
 import SidebarLink from "./SidebarLink";
 
 const links = [
-  { label: "Home", icon: "Grid", link: "/home" },
+  { label: "Home", icon: "Grid", linkUrl: "/home" },
   {
     label: "Calendar",
     icon: "Calendar",
-    link: "/calendar",
+    linkUrl: "/calendar",
   },
-  { label: "Profile", icon: "User", link: "/profile" },
+  { label: "Profile", icon: "User", linkUrl: "/profile" },
   {
     label: "Settings",
     icon: "Settings",
-    link: "/settings",
+    linkUrl: "/settings",
   },
 ];
 
